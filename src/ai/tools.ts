@@ -33,11 +33,13 @@ export interface ReportToolOptions {
 
 // ── Create all report tools ──
 
-export function createReportTools(options: ReportToolOptions): DynamicStructuredTool[] {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createReportTools(options: ReportToolOptions): any[] {
   const session = new ReportSession(options.branding);
   const renderer = new PdfmakeRenderer();
 
-  const tools: DynamicStructuredTool[] = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tools: any[] = [
     // ── set_report_title ──
     new DynamicStructuredTool({
       name: 'set_report_title',
