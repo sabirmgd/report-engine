@@ -23,6 +23,8 @@ jobs:
       - run: npm install
 
       - run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - run: npm publish --access public
         env:
