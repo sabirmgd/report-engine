@@ -37,6 +37,7 @@ export function createReportTools(options: ReportToolOptions): any[] {
   const session = new ReportSession(options.branding);
   const renderer = new PdfmakeRenderer();
 
+  // Lazy require so tsc never resolves @langchain/core's complex generics
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { DynamicStructuredTool } = require('@langchain/core/tools');
 
@@ -53,13 +54,13 @@ export function createReportTools(options: ReportToolOptions): any[] {
         recipientName: z.string().optional().describe('Who the report is prepared for'),
         badge: z.string().optional().describe('Short badge label (e.g. "CONFIDENTIAL", "QUARTERLY")'),
       }),
-      func: async ({ title, subtitle, date, recipientName, badge }) => {
-        session.builder.title(title);
-        if (subtitle) session.builder.subtitle(subtitle);
-        if (date) session.builder.date(date);
-        if (recipientName) session.builder.recipientName(recipientName);
-        if (badge) session.builder.badge(badge);
-        return `Report title set to "${title}"`;
+      func: async (args: { title: string; subtitle?: string; date?: string; recipientName?: string; badge?: string }) => {
+        session.builder.title(args.title);
+        if (args.subtitle) session.builder.subtitle(args.subtitle);
+        if (args.date) session.builder.date(args.date);
+        if (args.recipientName) session.builder.recipientName(args.recipientName);
+        if (args.badge) session.builder.badge(args.badge);
+        return `Report title set to "${args.title}"`;
       },
     }),
 
@@ -70,9 +71,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
       schema: z.object({
         title: z.string().describe('Section title'),
       }),
-      func: async ({ title }) => {
-        session.builder.section(title);
-        return `Section "${title}" started`;
+      func: async (args: { title: string }) => {
+        session.builder.section(args.title);
+        return `Section "${args.title}" started`;
       },
     }),
 
@@ -83,9 +84,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
       schema: z.object({
         paragraphs: z.array(z.string()).describe('Array of text paragraphs'),
       }),
-      func: async ({ paragraphs }) => {
-        session.builder.narrative(paragraphs);
-        return `Added narrative with ${paragraphs.length} paragraph(s)`;
+      func: async (args: { paragraphs: string[] }) => {
+        session.builder.narrative(args.paragraphs);
+        return `Added narrative with ${args.paragraphs.length} paragraph(s)`;
       },
     }),
 
@@ -97,9 +98,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
         level: z.number().int().min(1).max(3).describe('Heading level: 1=largest, 3=smallest'),
         text: z.string().describe('Heading text'),
       }),
-      func: async ({ level, text }) => {
-        session.builder.heading(level as 1 | 2 | 3, text);
-        return `Added h${level} heading: "${text}"`;
+      func: async (args: { level: number; text: string }) => {
+        session.builder.heading(args.level as 1 | 2 | 3, args.text);
+        return `Added h${args.level} heading: "${args.text}"`;
       },
     }),
 
@@ -115,9 +116,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
         rows: z.array(z.array(z.string())).describe('Table rows — each row is an array of cell strings matching column count'),
         caption: z.string().optional().describe('Optional caption below the table'),
       }),
-      func: async ({ columns, rows, caption }) => {
-        session.builder.table(columns, rows, caption);
-        return `Added table with ${columns.length} columns and ${rows.length} rows`;
+      func: async (args: { columns: Array<{ header: string; align?: 'left' | 'center' | 'right' }>; rows: string[][]; caption?: string }) => {
+        session.builder.table(args.columns, args.rows, args.caption);
+        return `Added table with ${args.columns.length} columns and ${args.rows.length} rows`;
       },
     }),
 
@@ -131,9 +132,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
           value: z.string().describe('Value'),
         })),
       }),
-      func: async ({ pairs }) => {
-        session.builder.keyValue(pairs);
-        return `Added ${pairs.length} key-value pairs`;
+      func: async (args: { pairs: Array<{ key: string; value: string }> }) => {
+        session.builder.keyValue(args.pairs);
+        return `Added ${args.pairs.length} key-value pairs`;
       },
     }),
 
@@ -145,9 +146,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
         variant: z.enum(['info', 'warning', 'success', 'danger']).describe('Callout style'),
         text: z.string().describe('Callout message'),
       }),
-      func: async ({ variant, text }) => {
-        session.builder.callout(variant, text);
-        return `Added ${variant} callout`;
+      func: async (args: { variant: 'info' | 'warning' | 'success' | 'danger'; text: string }) => {
+        session.builder.callout(args.variant, args.text);
+        return `Added ${args.variant} callout`;
       },
     }),
 
@@ -163,9 +164,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
           detail: z.string().optional(),
         })),
       }),
-      func: async ({ heading, items }) => {
-        session.builder.checklist(items, heading);
-        return `Added checklist with ${items.length} items`;
+      func: async (args: { heading?: string; items: Array<{ label: string; checked: boolean; detail?: string }> }) => {
+        session.builder.checklist(args.items, args.heading);
+        return `Added checklist with ${args.items.length} items`;
       },
     }),
 
@@ -174,7 +175,7 @@ export function createReportTools(options: ReportToolOptions): any[] {
       name: 'add_divider',
       description: 'Add a horizontal divider line to the current section.',
       schema: z.object({}),
-      func: async () => {
+      func: async (_args: Record<string, never>) => {
         session.builder.divider();
         return 'Added divider';
       },
@@ -187,9 +188,9 @@ export function createReportTools(options: ReportToolOptions): any[] {
       schema: z.object({
         question: z.string().describe('The question to ask the user'),
       }),
-      func: async ({ question }) => {
+      func: async (args: { question: string }) => {
         if (options.onQuestion) {
-          return await options.onQuestion(question);
+          return await options.onQuestion(args.question);
         }
         return 'No answer provided';
       },
@@ -202,10 +203,10 @@ export function createReportTools(options: ReportToolOptions): any[] {
       schema: z.object({
         filename: z.string().describe('Output filename without extension (e.g. "q1-sales-report")'),
       }),
-      func: async ({ filename }) => {
+      func: async (args: { filename: string }) => {
         const doc = session.builder.build();
         const buffer = await renderer.render(doc);
-        const fullFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+        const fullFilename = args.filename.endsWith('.pdf') ? args.filename : `${args.filename}.pdf`;
         if (options.onComplete) {
           await options.onComplete(buffer, fullFilename);
         }
@@ -229,7 +230,8 @@ export function createReportTools(options: ReportToolOptions): any[] {
           reportType: z.string().describe('The report type ID from the registry'),
           preProvided: z.record(z.unknown()).optional().describe('Optional pre-provided field values'),
         }),
-        func: async ({ reportType, preProvided = {} }) => {
+        func: async (args: { reportType: string; preProvided?: Record<string, unknown> }) => {
+          const { reportType, preProvided = {} } = args;
           const def = registry.get(reportType);
           if (!def) {
             const available = registry.list().map((d) => d.id).join(', ');
@@ -279,7 +281,7 @@ export function createReportTools(options: ReportToolOptions): any[] {
         name: 'list_available_reports',
         description: 'List all available report types that can be generated.',
         schema: z.object({}),
-        func: async () => {
+        func: async (_args: Record<string, never>) => {
           const reports = registry.list();
           if (reports.length === 0) return 'No report types are registered.';
           return reports
