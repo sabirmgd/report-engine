@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { DynamicStructuredTool } from '@langchain/core/tools';
 import { ReportBuilder } from '../core/report-builder.js';
 import { PdfmakeRenderer } from '../core/renderer.js';
 import type { BrandingConfig } from '../core/types.js';
@@ -37,6 +36,9 @@ export interface ReportToolOptions {
 export function createReportTools(options: ReportToolOptions): any[] {
   const session = new ReportSession(options.branding);
   const renderer = new PdfmakeRenderer();
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { DynamicStructuredTool } = require('@langchain/core/tools');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tools: any[] = [
