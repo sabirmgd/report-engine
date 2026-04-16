@@ -2,7 +2,7 @@ import type { ReportDocument } from './types.js';
 
 // ── Field types ──
 
-export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'select' | 'multi_select' | 'date_range';
+export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'select' | 'multi_select' | 'date_range' | 'entity_select';
 
 export interface ReportFieldDef {
   key: string;
@@ -12,6 +12,8 @@ export interface ReportFieldDef {
   required: boolean;
   options?: string[];
   defaultValue?: unknown;
+  /** For entity_select fields — tells the frontend which entity list to fetch (e.g. 'dashboard', 'metric') */
+  entityType?: string;
   autoResolve?: (ctx: ReportContext) => unknown | undefined;
 }
 
