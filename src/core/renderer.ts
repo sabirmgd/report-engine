@@ -24,9 +24,12 @@ export class PdfmakeRenderer {
 
     const content: Content[] = [];
 
-    // Cover page
+    // Cover header — no forced page break, sections flow on same page
     content.push(this.renderCoverPage(doc, palette, logoDataUri));
-    content.push({ text: '', pageBreak: 'after' });
+    content.push({
+      canvas: [{ type: 'line', x1: 0, y1: 0, x2: SPACING.contentWidth, y2: 0, lineWidth: 0.5, lineColor: palette.borderLight }],
+      margin: [0, 16, 0, 24] as [number, number, number, number],
+    });
 
     // Sections
     for (const section of sections) {
